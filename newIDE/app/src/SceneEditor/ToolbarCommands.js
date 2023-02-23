@@ -18,6 +18,8 @@ type Props = {|
   setupGrid: () => void,
   canRenameObject: boolean,
   onRenameObject: () => void,
+  canDuplicateObject: boolean,
+  onDuplicateObject: () => void,
 |};
 
 const ToolbarCommands = (props: Props) => {
@@ -67,6 +69,10 @@ const ToolbarCommands = (props: Props) => {
 
   useCommand('RENAME_SCENE_OBJECT', props.canRenameObject, {
     handler: props.onRenameObject,
+  });
+
+  useCommand('DUPLICATE_SCENE_OBJECT', props.canDuplicateObject, {
+    handler: props.onDuplicateObject,
   });
 
   return null;

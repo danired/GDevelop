@@ -38,6 +38,7 @@ export type CommandName =
   | 'SCENE_EDITOR_UNDO'
   | 'SCENE_EDITOR_REDO'
   | 'RENAME_SCENE_OBJECT'
+  | 'DUPLICATE_SCENE_OBJECT'
   | 'DELETE_INSTANCES'
   | 'TOGGLE_WINDOW_MASK'
   | 'TOGGLE_GRID'
@@ -238,6 +239,10 @@ const commandsList: { [CommandName]: CommandMetadata } = {
   RENAME_SCENE_OBJECT: {
     area: 'SCENE',
     displayText: t`Rename the selected object`,
+  },
+  DUPLICATE_SCENE_OBJECT: {
+    area: 'SCENE',
+    displayText: t`Duplicate the selected object`,
   },
   DELETE_INSTANCES: {
     area: 'SCENE',

@@ -24,7 +24,10 @@ import SetupGridDialog from './SetupGridDialog';
 import ScenePropertiesDialog from './ScenePropertiesDialog';
 import { type ObjectEditorTab } from '../ObjectEditor/ObjectEditorDialog';
 import Toolbar from './Toolbar';
-import { serializeToJSObject } from '../Utils/Serializer';
+import {
+  serializeToJSObject,
+  unserializeFromJSObject,
+} from '../Utils/Serializer';
 import Clipboard, { SafeExtractor } from '../Utils/Clipboard';
 import Window from '../Utils/Window';
 import FullSizeInstancesEditorWithScrollbars from '../InstancesEditor/FullSizeInstancesEditorWithScrollbars';
@@ -34,6 +37,7 @@ import ContextMenu, { type ContextMenuInterface } from '../UI/Menu/ContextMenu';
 import { showWarningBox } from '../UI/Messages/MessageBox';
 import { shortenString } from '../Utils/StringHelpers';
 import getObjectByName from '../Utils/GetObjectByName';
+import newNameGenerator from '../Utils/NewNameGenerator';
 import UseSceneEditorCommands from './UseSceneEditorCommands';
 import { type InstancesEditorSettings } from '../InstancesEditor/InstancesEditorSettings';
 import { type ResourceManagementProps } from '../ResourcesList/ResourceSource';
@@ -259,6 +263,8 @@ export default class SceneEditor extends React.Component<Props, State> {
         onOpenSettings={this.openSceneProperties}
         canRenameObject={this.state.selectedObjectsWithContext.length === 1}
         onRenameObject={this._startRenamingSelectedObject}
+        canDuplicateObject={this.state.selectedObjectsWithContext.length === 1}
+        onDuplicateObject={this._startDuplicatingSelectedObject}
       />
     );
   }
@@ -742,6 +748,70 @@ export default class SceneEditor extends React.Component<Props, State> {
 
   _startRenamingSelectedObject = () => {
     this._onRenameObjectStart(this.state.selectedObjectsWithContext[0]);
+  };
+
+  _onDuplicateObjectStart = (objectWithContext: ?ObjectWithContext) => {
+    if (objectWithContext) {
+      const { object, global } = objectWithContext;
+
+      const type = object.getType();
+      const name = object.getName();
+      const serializedObject = serializeToJSObject(object);
+
+      const newObjectWithContext = this._addSerializedObjectToObjectsContainer(
+        name,
+        name,
+        type,
+        global,
+        serializedObject,
+      );
+
+      this._onRenameObjectStart(newObjectWithContext);
+    }
+  };
+
+  _startDuplicatingSelectedObject = () => {
+    this._onDuplicateObjectStart(this.state.selectedObjectsWithContext[0]);
+  };
+
+  _addSerializedObjectToObjectsContainer = (
+      objectName: string,
+      positionObjectName: string,
+      objectType: string,
+      global: boolean,
+      serializedObject: Object
+    ): ObjectWithContext => {
+      const newName = newNameGenerator(
+        objectName,
+        name =>
+        this.props.layout.hasObjectNamed(name) ||
+          this.props.project.hasObjectNamed(name),
+        ''
+      );
+
+      const newObject = global
+        ? this.props.project.insertNewObject(
+            this.props.project,
+            objectType,
+            newName,
+            this.props.project.getObjectPosition(positionObjectName) + 1
+          )
+        : this.props.layout.insertNewObject(
+          this.props.project,
+            objectType,
+            newName,
+            this.props.layout.getObjectPosition(positionObjectName) + 1
+          );
+
+      unserializeFromJSObject(
+        newObject,
+        serializedObject,
+        'unserializeFrom',
+        this.props.project
+      );
+      newObject.setName(newName); // Unserialization has overwritten the name.
+
+      return { object: newObject, global };
   };
 
   _onRenameLayer = (
@@ -1517,6 +1587,8 @@ export default class SceneEditor extends React.Component<Props, State> {
                 renamedObjectWithContext={this.state.renamedObjectWithContext}
                 onRenameObjectStart={this._onRenameObjectStart}
                 onRenameObjectFinish={this._onRenameObjectFinish}
+                onDuplicateObjectStart={this._onDuplicateObjectStart}
+                addSerializedObjectToObjectsContainer={this._addSerializedObjectToObjectsContainer}
                 onAddObjectInstance={this.addInstanceAtTheCenter}
                 onObjectPasted={() => this.updateBehaviorsSharedData()}
                 selectedObjectTags={this.state.selectedObjectTags}

@@ -263,6 +263,7 @@ export default class EventBasedObjectChildrenEditor extends React.Component<
                 onRenameObjectFinish={(objectWithContext, newName, done) =>
                   this._onRenameObject(objectWithContext, newName, done, i18n)
                 }
+                onDuplicateObjectStart={() => {}}
                 // Instances can't be created from this context.
                 onAddObjectInstance={() => {}}
                 onObjectPasted={() => this.updateBehaviorsSharedData()}

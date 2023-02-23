@@ -15,7 +15,6 @@ import Clipboard, { SafeExtractor } from '../Utils/Clipboard';
 import Window from '../Utils/Window';
 import {
   serializeToJSObject,
-  unserializeFromJSObject,
 } from '../Utils/Serializer';
 import { showWarningBox } from '../UI/Messages/MessageBox';
 import {
@@ -116,6 +115,8 @@ type Props = {|
     newName: string,
     cb: (boolean) => void
   ) => void,
+  onDuplicateObjectStart: (?ObjectWithContext) => void,
+  addSerializedObjectToObjectsContainer: (string, string, string, boolean, Object) => ObjectWithContext,
   selectedObjectNames: Array<string>,
   canInstallPrivateAsset: () => boolean,
 
@@ -151,6 +152,8 @@ const ObjectsList = React.forwardRef<Props, ObjectsListInterface>(
       renamedObjectWithContext,
       onRenameObjectStart,
       onRenameObjectFinish,
+      onDuplicateObjectStart,
+      addSerializedObjectToObjectsContainer,
       selectedObjectNames,
       canInstallPrivateAsset,
 
@@ -322,55 +325,6 @@ const ObjectsList = React.forwardRef<Props, ObjectsListInterface>(
       [copyObject, deleteObject]
     );
 
-    const addSerializedObjectToObjectsContainer = React.useCallback(
-      ({
-        objectName,
-        positionObjectName,
-        objectType,
-        global,
-        serializedObject,
-      }: {|
-        objectName: string,
-        positionObjectName: string,
-        objectType: string,
-        global: boolean,
-        serializedObject: Object,
-      |}): ObjectWithContext => {
-        const newName = newNameGenerator(
-          objectName,
-          name =>
-            objectsContainer.hasObjectNamed(name) ||
-            project.hasObjectNamed(name),
-          ''
-        );
-
-        const newObject = global
-          ? project.insertNewObject(
-              project,
-              objectType,
-              newName,
-              project.getObjectPosition(positionObjectName) + 1
-            )
-          : objectsContainer.insertNewObject(
-              project,
-              objectType,
-              newName,
-              objectsContainer.getObjectPosition(positionObjectName) + 1
-            );
-
-        unserializeFromJSObject(
-          newObject,
-          serializedObject,
-          'unserializeFrom',
-          project
-        );
-        newObject.setName(newName); // Unserialization has overwritten the name.
-
-        return { object: newObject, global };
-      },
-      [objectsContainer, project]
-    );
-
     const paste = React.useCallback(
       (objectWithContext: ObjectWithContext): ?ObjectWithContext => {
         if (!Clipboard.has(CLIPBOARD_KIND)) return null;
@@ -391,13 +345,13 @@ const ObjectsList = React.forwardRef<Props, ObjectsListInterface>(
         );
         if (!name || !type || !copiedObject) return;
 
-        const newObjectWithContext = addSerializedObjectToObjectsContainer({
-          objectName: name,
-          positionObjectName: pasteObject.getName(),
-          objectType: type,
-          serializedObject: copiedObject,
+        const newObjectWithContext = addSerializedObjectToObjectsContainer(
+          name,
+          pasteObject.getName(),
+          type,
           global,
-        });
+          copiedObject,
+        );
 
         onObjectModified(false);
         if (onObjectPasted) onObjectPasted(newObjectWithContext.object);
@@ -418,23 +372,11 @@ const ObjectsList = React.forwardRef<Props, ObjectsListInterface>(
 
     const duplicateObject = React.useCallback(
       (objectWithContext: ObjectWithContext) => {
-        const { object, global } = objectWithContext;
-
-        const type = object.getType();
-        const name = object.getName();
-        const serializedObject = serializeToJSObject(object);
-
-        const newObjectWithContext = addSerializedObjectToObjectsContainer({
-          objectName: name,
-          positionObjectName: name,
-          objectType: type,
-          serializedObject,
-          global,
-        });
-
-        editName(newObjectWithContext);
+        onDuplicateObjectStart(objectWithContext);
+        // TODO Should it be called later?
+        if (sortableList.current) sortableList.current.forceUpdateGrid();
       },
-      [addSerializedObjectToObjectsContainer, editName]
+      [onDuplicateObjectStart]
     );
 
     const rename = React.useCallback(
@@ -685,6 +627,10 @@ const ObjectsList = React.forwardRef<Props, ObjectsListInterface>(
           {
             label: i18n._(t`Duplicate`),
             click: () => duplicateObject(objectWithContext),
+            accelerator: getShortcutDisplayName(
+              preferences.values.userShortcutMap['DUPLICATE_SCENE_OBJECT'] ||
+                defaultShortcuts.DUPLICATE_SCENE_OBJECT
+            ),
           },
           { type: 'separator' },
           {

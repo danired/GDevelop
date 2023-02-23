@@ -285,6 +285,7 @@ export const WithObjectsList = () => (
                   onRenameObjectFinish={(objectWithContext, newName, cb) =>
                     cb(true)
                   }
+                  onDuplicateObjectStart={() => {}}
                   onObjectCreated={() => {}}
                   onObjectSelected={() => {}}
                   renamedObjectWithContext={null}

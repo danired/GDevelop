@@ -49,6 +49,7 @@ export const Default = () => (
           onDeleteObject={(objectWithContext, cb) => cb(true)}
           onRenameObjectStart={() => {}}
           onRenameObjectFinish={(objectWithContext, newName, cb) => cb(true)}
+          onDuplicateObjectStart={() => {}}
           onObjectSelected={() => {}}
           renamedObjectWithContext={null}
           hotReloadPreviewButtonProps={fakeHotReloadPreviewButtonProps}
@@ -92,6 +93,7 @@ export const WithTags = () => (
           onDeleteObject={(objectWithContext, cb) => cb(true)}
           onRenameObjectStart={() => {}}
           onRenameObjectFinish={(objectWithContext, newName, cb) => cb(true)}
+          onDuplicateObjectStart={() => {}}
           onObjectSelected={() => {}}
           renamedObjectWithContext={null}
           hotReloadPreviewButtonProps={fakeHotReloadPreviewButtonProps}

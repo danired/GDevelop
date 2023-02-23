@@ -43,6 +43,8 @@ type Props = {|
   onOpenSettings?: ?() => void,
   canRenameObject: boolean,
   onRenameObject: () => void,
+  canDuplicateObject: boolean,
+  onDuplicateObject: () => void,
 |};
 
 const Toolbar = (props: Props) => {
@@ -67,6 +69,8 @@ const Toolbar = (props: Props) => {
         }
         canRenameObject={props.canRenameObject}
         onRenameObject={props.onRenameObject}
+        canDuplicateObject={props.canDuplicateObject}
+        onDuplicateObject={props.onDuplicateObject}
       />
       <ToolbarGroup lastChild>
         <IconButton
